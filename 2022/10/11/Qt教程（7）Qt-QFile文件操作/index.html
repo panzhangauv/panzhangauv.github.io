@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"panzhangauv.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="很多应用程序都需要具备操作文件的能力，包括对文件内容进行读&#x2F;写、创建和删除文件等，甚至某些应用程序的诞生纯粹是为了操作文件，比如 WPS Office、PDFedit 等。为此，Qt 框架提供了 QFile 类专门用来操作文件。 1、QFile文件操作QFile 类支持对文件进行读取、写入、删除、重命名、拷贝等操作，它既可以操作文件文件，也可以操作二进制文件。 使用 QFile 类操作文">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Qt教程（7）Qt QFile文件操作">
+<meta property="og:url" content="https://panzhangauv.github.io/2022/10/11/Qt%E6%95%99%E7%A8%8B%EF%BC%887%EF%BC%89Qt-QFile%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C/index.html">
+<meta property="og:site_name" content="慢就是快">
+<meta property="og:description" content="很多应用程序都需要具备操作文件的能力，包括对文件内容进行读&#x2F;写、创建和删除文件等，甚至某些应用程序的诞生纯粹是为了操作文件，比如 WPS Office、PDFedit 等。为此，Qt 框架提供了 QFile 类专门用来操作文件。 1、QFile文件操作QFile 类支持对文件进行读取、写入、删除、重命名、拷贝等操作，它既可以操作文件文件，也可以操作二进制文件。 使用 QFile 类操作文">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-10-11T05:07:17.000Z">
+<meta property="article:modified_time" content="2022-10-11T05:22:19.102Z">
+<meta property="article:author" content="ZhangPan">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://panzhangauv.github.io/2022/10/11/Qt%E6%95%99%E7%A8%8B%EF%BC%887%EF%BC%89Qt-QFile%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Qt教程（7）Qt QFile文件操作 | 慢就是快</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">慢就是快</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">经常输出</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://panzhangauv.github.io/2022/10/11/Qt%E6%95%99%E7%A8%8B%EF%BC%887%EF%BC%89Qt-QFile%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="ZhangPan">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="慢就是快">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Qt教程（7）Qt QFile文件操作
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-10-11 13:07:17 / 修改时间：13:22:19" itemprop="dateCreated datePublished" datetime="2022-10-11T13:07:17+08:00">2022-10-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Qt%E6%95%99%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">Qt教程</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>很多应用程序都需要具备操作文件的能力，包括<strong>对文件内容进行读&#x2F;写、创建和删除文件</strong>等，甚至某些应用程序的诞生纯粹是为了操作文件，比如 WPS Office、PDFedit 等。为此，Qt 框架提供了 QFile 类专门用来操作文件。</p>
+<h1 id="1、QFile文件操作"><a href="#1、QFile文件操作" class="headerlink" title="1、QFile文件操作"></a>1、QFile文件操作</h1><p>QFile 类支持对文件进行读取、写入、删除、重命名、拷贝等操作，它既可以操作文件文件，也可以操作二进制文件。</p>
+<p>使用 QFile 类操作文件之前，程序中需引入<code>&lt;QFile&gt;</code>头文件。创建 QFile 类的对象，常用的构造函数有：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">QFile::<span class="built_in">QFile</span>()</span><br><span class="line">QFile::<span class="built_in">QFile</span>(<span class="type">const</span> QString &amp;name)</span><br></pre></td></tr></table></figure>
+<p>参数 <code>name</code> 用来指定要操作的目标文件，包含文件的存储路径和文件名，存储路径可以使用绝对路径（比如 <code>&quot;D:/Demo/test.txt&quot;</code>）或者相对路径（比如<code>&quot;./Demo/test.txt&quot;</code>），路径中的分隔符要用 <code>&quot;/&quot;</code> 表示。</p>
+<p>通常情况下，我们会调用第二个构造函数，直接指明要操作的文件。对于第一个构造函数创建的 QFile 对象，需要再调用 <code>setFileName()</code> 方法指明要操作的文件。  </p>
+<p>与 C++ 读写文件的规则一样，使用 QFile 读写文件之前必须先打开文件，调用<code>open()</code>成员方法即可，常用的语法格式为：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">QFile::open</span><span class="params">(OpenMode mode)</span></span></span><br></pre></td></tr></table></figure>
+<p><code>mode </code>参数用来指定文件的打开方式  </p>
+<table>
+<thead>
+<tr>
+<th>打开方式</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>QIODevice::ReadOnly</td>
+<td>只能对文件进行读操作</td>
+</tr>
+<tr>
+<td>QIODevice::WriteOnly</td>
+<td>只能对文件进行写操作，如果目标文件不存在，会自行创建一个新文件。</td>
+</tr>
+<tr>
+<td>QIODevice::ReadWrite</td>
+<td>等价于 <code>ReadOnly and WriteOnly</code>，能对文件进行读和写操作。</td>
+</tr>
+<tr>
+<td>QIODevice::Append</td>
+<td>以追加模式打开文件，写入的数据会追加到文件的末尾（文件原有的内容保留）。</td>
+</tr>
+</tbody></table>
+<p>如果文件成功打开，open() 函数返回 true，否则返回 false。</p>
+<p>【实例一】演示了 QFile 类读写文本文件的过程:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;QFile&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;QDebug&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//创建 QFile 对象，同时指定要操作的文件</span></span><br><span class="line">    <span class="function">QFile <span class="title">file</span><span class="params">(<span class="string">&quot;D:/demo.txt&quot;</span>)</span></span>;</span><br><span class="line">    <span class="comment">//对文件进行写操作</span></span><br><span class="line">    <span class="keyword">if</span>(!file.<span class="built_in">open</span>(QIODevice::WriteOnly|QIODevice::Text))&#123;</span><br><span class="line">        <span class="built_in">qDebug</span>()&lt;&lt;<span class="string">&quot;文件打开失败&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//向文件中写入两行字符串</span></span><br><span class="line">    file.<span class="built_in">write</span>(<span class="string">&quot;城东书院\n&quot;</span>);</span><br><span class="line">    file.<span class="built_in">write</span>(<span class="string">&quot;https://www.cdsy.xyz&quot;</span>);</span><br><span class="line">    <span class="comment">//关闭文件</span></span><br><span class="line">    file.<span class="built_in">close</span>();</span><br><span class="line">    <span class="comment">//重新打开文件，对文件进行读操作</span></span><br><span class="line">    <span class="keyword">if</span>(!file.<span class="built_in">open</span>(QIODevice::ReadOnly|QIODevice::Text))&#123;</span><br><span class="line">        <span class="built_in">qDebug</span>()&lt;&lt;<span class="string">&quot;文件打开失败&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//每次都去文件中的一行，然后输出读取到的字符串</span></span><br><span class="line">    <span class="type">char</span> * str = <span class="keyword">new</span> <span class="type">char</span>[<span class="number">100</span>];</span><br><span class="line">    qint64 readNum = file.<span class="built_in">readLine</span>(str,<span class="number">100</span>);</span><br><span class="line">    <span class="comment">//当读取出现错误（返回 -1）或者读取到的字符数为 0 时，结束读取</span></span><br><span class="line">    <span class="keyword">while</span>((readNum !=<span class="number">0</span>) &amp;&amp; (readNum != <span class="number">-1</span>))&#123;</span><br><span class="line">        <span class="built_in">qDebug</span>() &lt;&lt; str;</span><br><span class="line">        readNum = file.<span class="built_in">readLine</span>(str,<span class="number">100</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    file.<span class="built_in">close</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>执行程序，”城东书院” 和 “<a target="_blank" rel="noopener" href="https://www.cdsy.xyz&quot;/">https://www.cdsy.xyz&quot;</a> 先写入 D 盘的 demo.txt 文件，然后再从文件中将它们读取出来。  </p>
+<p>单独使用 QFile 类读写文件的过程既繁琐又复杂，Qt 提供了两个辅助类<code> QTextStream</code> 和 <code>QDataStream</code>，前者用来读写文件文件，后者用来读写二进制文件，QFile 可以和它们搭配使用，从整体上提高读写文件的开发效率。  </p>
+<p>QTextStream 类重载了&gt;&gt;输入运算符和&gt;&gt;输出运算符，使读写文本文件变得更简单。例如，用 QTextStream 实现【实例一】的程序如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;QFile&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;QDebug&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;QString&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;QTextStream&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//创建 QFile 对象，同时指定要操作的文件</span></span><br><span class="line">    <span class="function">QFile <span class="title">file</span><span class="params">(<span class="string">&quot;D:/demo.txt&quot;</span>)</span></span>;</span><br><span class="line">    <span class="comment">//对文件进行写操作</span></span><br><span class="line">    <span class="keyword">if</span>(!file.<span class="built_in">open</span>(QIODevice::WriteOnly|QIODevice::Text))&#123;</span><br><span class="line">        <span class="built_in">qDebug</span>()&lt;&lt;<span class="string">&quot;文件打开失败&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function">QTextStream <span class="title">out</span><span class="params">(&amp;file)</span></span>;</span><br><span class="line">    <span class="comment">//向文件中写入两行字符串</span></span><br><span class="line">    out &lt;&lt; (QString)<span class="string">&quot;城东书院\n&quot;</span> &lt;&lt; (QString)<span class="string">&quot;https://www.cdsy.xyz&quot;</span>;</span><br><span class="line">    <span class="comment">//关闭文件</span></span><br><span class="line">    file.<span class="built_in">close</span>();</span><br><span class="line">    <span class="comment">//重新打开文件，对文件进行读操作</span></span><br><span class="line">    <span class="keyword">if</span>(!file.<span class="built_in">open</span>(QIODevice::ReadOnly|QIODevice::Text))&#123;</span><br><span class="line">        <span class="built_in">qDebug</span>()&lt;&lt;<span class="string">&quot;文件打开失败&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function">QTextStream <span class="title">in</span><span class="params">(&amp;file)</span></span>;</span><br><span class="line">    <span class="comment">//一直读，直至读取失败</span></span><br><span class="line">    <span class="keyword">while</span>(!in.<span class="built_in">atEnd</span>())&#123;</span><br><span class="line">        QString str;</span><br><span class="line">        <span class="comment">//从文件中读取一个字符串</span></span><br><span class="line">        in &gt;&gt; str;</span><br><span class="line">        <span class="built_in">qDebug</span>() &lt;&lt; str;</span><br><span class="line">    &#125;</span><br><span class="line">    file.<span class="built_in">close</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>ZhangPan
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://panzhangauv.github.io/2022/10/11/Qt%E6%95%99%E7%A8%8B%EF%BC%887%EF%BC%89Qt-QFile%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C/" title="Qt教程（7）Qt QFile文件操作">https://panzhangauv.github.io/2022/10/11/Qt教程（7）Qt-QFile文件操作/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/10/11/Qt%E6%95%99%E7%A8%8B%EF%BC%886%EF%BC%89Qt%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BF%A1%E5%8F%B7%E5%92%8C%E6%A7%BD%E5%87%BD%E6%95%B0/" rel="prev" title="Qt教程（6）Qt自定义信号和槽函数">
+      <i class="fa fa-chevron-left"></i> Qt教程（6）Qt自定义信号和槽函数
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/10/13/Docker%E6%95%99%E7%A8%8B/" rel="next" title="Docker教程">
+      Docker教程 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#1%E3%80%81QFile%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C"><span class="nav-number">1.</span> <span class="nav-text">1、QFile文件操作</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">ZhangPan</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ZhangPan</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

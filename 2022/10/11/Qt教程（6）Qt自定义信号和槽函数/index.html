@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"panzhangauv.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="实际开发中，如果仅使用 Qt 提供的信号函数和槽函数，会经常遇到信号函数的参数类型和个数无法满足实际需求、信号函数和槽函数的参数类型不匹配等问题。解决此类问题，最简单有效的方式就是：自定义场景需要的信号函数和槽函数。 1、自定义信号函数信号函数指的是符合以下条件的函数： · 定义在某个类中，该类直接或间接继承自 QObject 类；· 用 signals 关键字修饰；· 函数只需要声明，不需要定义">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Qt教程（6）Qt自定义信号和槽函数">
+<meta property="og:url" content="https://panzhangauv.github.io/2022/10/11/Qt%E6%95%99%E7%A8%8B%EF%BC%886%EF%BC%89Qt%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BF%A1%E5%8F%B7%E5%92%8C%E6%A7%BD%E5%87%BD%E6%95%B0/index.html">
+<meta property="og:site_name" content="慢就是快">
+<meta property="og:description" content="实际开发中，如果仅使用 Qt 提供的信号函数和槽函数，会经常遇到信号函数的参数类型和个数无法满足实际需求、信号函数和槽函数的参数类型不匹配等问题。解决此类问题，最简单有效的方式就是：自定义场景需要的信号函数和槽函数。 1、自定义信号函数信号函数指的是符合以下条件的函数： · 定义在某个类中，该类直接或间接继承自 QObject 类；· 用 signals 关键字修饰；· 函数只需要声明，不需要定义">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-10-11T04:43:49.000Z">
+<meta property="article:modified_time" content="2022-10-11T05:06:41.387Z">
+<meta property="article:author" content="ZhangPan">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://panzhangauv.github.io/2022/10/11/Qt%E6%95%99%E7%A8%8B%EF%BC%886%EF%BC%89Qt%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BF%A1%E5%8F%B7%E5%92%8C%E6%A7%BD%E5%87%BD%E6%95%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Qt教程（6）Qt自定义信号和槽函数 | 慢就是快</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">慢就是快</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">经常输出</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://panzhangauv.github.io/2022/10/11/Qt%E6%95%99%E7%A8%8B%EF%BC%886%EF%BC%89Qt%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BF%A1%E5%8F%B7%E5%92%8C%E6%A7%BD%E5%87%BD%E6%95%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="ZhangPan">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="慢就是快">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Qt教程（6）Qt自定义信号和槽函数
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-10-11 12:43:49 / 修改时间：13:06:41" itemprop="dateCreated datePublished" datetime="2022-10-11T12:43:49+08:00">2022-10-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Qt%E6%95%99%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">Qt教程</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>实际开发中，如果仅使用 Qt 提供的信号函数和槽函数，会经常遇到信号函数的参数类型和个数无法满足实际需求、信号函数和槽函数的参数类型不匹配等问题。解决此类问题，最简单有效的方式就是：自定义场景需要的信号函数和槽函数。</p>
+<h1 id="1、自定义信号函数"><a href="#1、自定义信号函数" class="headerlink" title="1、自定义信号函数"></a>1、自定义信号函数</h1><p>信号函数指的是符合以下条件的函数：</p>
+<p>· 定义在某个类中，该类直接或间接继承自 <code>QObject</code> 类；<br>· 用 <code>signals</code> 关键字修饰；<br>· 函数只需要声明，不需要定义（实现）；<br>· 函数的返回值类型为 <code>void</code>，参数的类型和个数不限。  </p>
+<p>示例：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MyWidget</span>:<span class="keyword">public</span> QWidget&#123;</span><br><span class="line">    <span class="comment">//Q_OBJECT 是一个宏，添加它才能正常使用 Qt 的信号和槽机制</span></span><br><span class="line">    Q_OBJECT</span><br><span class="line"><span class="comment">//修饰信号函数的关键字</span></span><br><span class="line">signals:</span><br><span class="line">    <span class="comment">//自定义的信号函数</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">MySignal</span><span class="params">(QString message)</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>我们自定义了一个继承自 <code>QWidget</code> 的 <code>MyWidget</code> 类，<code>QWidget</code> 是 <code>QObject</code> 的子类，所以 <code>MyWidget</code> 间接继承自 <code>QObject</code> 类。<code>MyWidget</code> 类中自定义了名为 <code>MySignal</code> 的信号函数（可以简称 <code>MySignal</code> 信号），它用 <code>signals</code> 关键字修饰，没有返回值，也没有定义（实现），仅有 1 个参数。  </p>
+<p>对于 <code>MySignal()</code> 信号函数，程序中不会直接调用它，而是借助 <code>connect() </code>连接某个槽函数，实现的语法格式是：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">MyWidget myWidget;</span><br><span class="line">QObject::<span class="built_in">connect</span>(&amp;myWidget,&amp;MyWidget::MySignal,信号接收者,槽函数);</span><br></pre></td></tr></table></figure>
+<p>一旦确定了信号接收者和槽函数，当 <code>MySignal </code>信号发出后，与之相连的槽函数就会执行。那么，<strong>程序中如何发出<code> MySignal</code> 信号呢？</strong>  </p>
+<p>对于 Qt 提供给我们的信号函数，其底层已经设置好了信号发出的时机，例如按下鼠标时、点击 <code>Enter</code> 回车键时等等。对于自定义的信号，我们需要自己指定信号发出的时机，这就需要用到  <code>emit</code> 关键字。<code>emit</code> 中文意思为“发出、射出”，是 Qt 在 C++ 基础上扩展的一个关键字，专门用来发射信号。  </p>
+<p>以定义好的 <code>MySignal</code> 信号为例，修改 <code>MyWidget </code>类为：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MyWidget</span>:<span class="keyword">public</span> QWidget&#123;</span><br><span class="line">    <span class="comment">//Q_OBJECT 是一个宏，添加它才能正常使用 Qt 的信号和槽机制</span></span><br><span class="line">    Q_OBJECT</span><br><span class="line"><span class="comment">//自定义信号函数</span></span><br><span class="line">signals:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">MySignal</span><span class="params">(QString mess)</span></span>;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">emitSignal</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="function">emit <span class="title">MySignal</span><span class="params">(message)</span></span>;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    QString message;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>我们为 <code>MyWidget</code> 类新增了一个<code>emitSignal()</code>方法和一个 <code>message</code> 属性，<code>emitSignal() </code>方法中的<code>emit MySignal(message);</code>语句就表示发射 <code>MySignal</code> 信号。当程序中执行 <code>emitSingal() </code>函数时，就会发出 <code>MySignal</code> 信号，<code>message</code> 属性的值也会随信号一同发出，对应的槽函数可以接收到 <code>message</code> 的值。</p>
+<p><code>对于每一个自定义的信号函数，程序中都应该提供发射该信号的方法（函数），而且这样的方法（函数）可以有多个。</code>  </p>
+<h1 id="2、自定义槽函数"><a href="#2、自定义槽函数" class="headerlink" title="2、自定义槽函数"></a>2、自定义槽函数</h1><p>Qt5 中，槽函数既可以是普通的全局函数、也可以是类的成员函数、静态成员函数、友元函数、虚函数，还可以用 <code>lambda </code>表达式表示。</p>
+<p><strong>和信号函数不同，槽函数必须手动定义（实现）。</strong>槽函数可以在程序中直接调用，但主要用来响应某个信号。自定义一个槽函数时，需要注意以下几点：</p>
+<p>· 槽函数的返回值必须和信号函数相同，由于信号函数的返回值一定是 <code>void</code>，所以槽函数的返回值也必须为 <code>void</code>；<br>· 对于带参的信号函数，槽函数可以选择接收所有参数，则参数的类型、顺序、个数都必须与信号函数相同；也可以选择接收前几个参数，这些参数的类型、顺序都必须与信号函数相同；还可以选择不接受任何参数。<br>· 槽函数的参数个数只能比信号函数少，不能比信号函数多；<br>· 槽函数的参数不能有默认值。  </p>
+<p>举个例子，自定义响应 <code>MySignal</code> 信号的槽函数：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MyWidget</span>:<span class="keyword">public</span> QWidget&#123;</span><br><span class="line">    <span class="comment">//Q_OBJECT 是一个宏，添加它才能正常使用 Qt 的信号和槽机制</span></span><br><span class="line">    Q_OBJECT</span><br><span class="line">signals:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">MySignal</span><span class="params">(QString mess1,QString mess2)</span></span>;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">emitSignal</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="function">emit <span class="title">MySignal</span><span class="params">(message1,message2)</span></span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//类的成员函数</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">recSlot1</span><span class="params">(QString mess)</span></span>&#123;</span><br><span class="line">        <span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;执行 recSlot1() 成员函数，输出&quot;</span> &lt;&lt; mess;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="comment">//指明定义的是槽函数</span></span><br><span class="line"><span class="keyword">public</span> slots:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">recSlot2</span><span class="params">(QString mess1,QString mess2)</span></span>&#123;</span><br><span class="line">        <span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;执行 recSlot2() 槽函数，输出&quot;</span>&lt;&lt; mess1 &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; mess2;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    QString message1;</span><br><span class="line">    QString message2;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">//全局函数</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">recSlot3</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;执行 recSlot3() 全局函数&quot;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>程序中，重点关注 <code>recSlot1()</code>、<code>recSlot2()</code>、<code>recSlot3()</code> 这 3 个函数：</p>
+<p>· <code>recSlot1() </code>是 <code>MyWidget</code> 类内部的 <code>public </code>成员函数，可以当做槽函数使用；<br>· <code>recSlot2()</code> 位于 <code>MyWidget</code> 类的内部，修饰它的关键字是 <code>public slots</code>。<code>slots </code>和 <code>emit</code> 一样，是 Qt 扩展的一个关键字，专门用来修饰槽函数。也就是说，<code>recSlot2()</code> 是 <code>MyWidget </code>类中的槽函数。<br>· <code>recSlot3()</code> 是全局函数，可以当做槽函数使用。  </p>
+<p><code>slots</code> 关键字可以和 <code>public</code>、<code>protected</code>、<code>private</code> 搭配使用，它们的区别是：</p>
+<p>· <code>public slots</code>：该关键字修饰的槽函数，既可以在当前类及其子类的成员函数中调用，也可以在类外部的其它函数（比如<code>main()</code>函数）中调用；<br>· <code>protected slots</code>：该关键字修饰的槽函数，仅允许在当前类及其子类的成员函数内调用，不能在类外部的其它函数内调用；<br>· <code>private slots</code>：该关键字修饰的槽函数，只允许在当前类的成员函数内调用，不能在子类中调用，也不能在类外部的其它函数内调用。    </p>
+<p><code>既然 public 修饰的成员函数可以当做槽函数，为什么还要提供 slots 关键字呢？笔者认为，“兼容旧的 Qt 版本”是其中的一个原因。Qt4 中的槽函数只能是 slots 修饰的类成员函数，Qt5 中取消了这一限制，但考虑到要兼容旧的 Qt 版本，Qt5 保留了旧版本中 connect() 函数的语法格式，也保留了 slots 关键字。</code>  </p>
+<p>调用<code> connect()</code> 函数，将 <code>MySignal() </code>信号函数分别连接 <code>recSlot1()</code>、<code>recSlot2()</code>、<code>recSlot3()</code> 三个槽函数，实现代码为：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//类的成员函数作为槽函数</span></span><br><span class="line">QObject::<span class="built_in">connect</span>(&amp;mywidget,&amp;MyWidget::MySignal,&amp;mywidget,&amp;MyWidget::recSlot1);</span><br><span class="line"><span class="comment">//信号函数和槽函数相连接</span></span><br><span class="line">QObject::<span class="built_in">connect</span>(&amp;mywidget,&amp;MyWidget::MySignal,&amp;mywidget,&amp;MyWidget::recSlot2);</span><br><span class="line"><span class="comment">//全局函数作为槽函数</span></span><br><span class="line">QObject::<span class="built_in">connect</span>(&amp;mywidget,&amp;MyWidget::MySignal,&amp;recSlot3);</span><br></pre></td></tr></table></figure>
+<h1 id="3、完整示例"><a href="#3、完整示例" class="headerlink" title="3、完整示例"></a>3、完整示例</h1><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//main.cpp</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;QApplication&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;QWidget&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;QDebug&gt;</span></span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MyWidget</span>:<span class="keyword">public</span> QWidget&#123;</span><br><span class="line">    <span class="comment">//Q_OBJECT 是一个宏，添加它才能正常使用 Qt 的信号和槽机制</span></span><br><span class="line">    Q_OBJECT</span><br><span class="line"><span class="comment">//信号函数</span></span><br><span class="line">signals:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">MySignal</span><span class="params">(QString mess1,QString mess2)</span></span>;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">//发射信号的函数</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">emitSignal</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="function">emit <span class="title">MySignal</span><span class="params">(message1,message2)</span></span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//普通类成员函数</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">recSlot1</span><span class="params">(QString mess)</span></span>&#123;</span><br><span class="line">        <span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;执行 recSlot1() 成员函数，输出&quot;</span> &lt;&lt; mess;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="comment">//槽函数</span></span><br><span class="line"><span class="keyword">public</span> slots:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">recSlot2</span><span class="params">(QString mess1,QString mess2)</span></span>&#123;</span><br><span class="line">        <span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;执行 recSlot2() 槽函数，输出&quot;</span>&lt;&lt; mess1 &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; mess2;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    QString message1;</span><br><span class="line">    QString message2;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">//全局函数</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">recSlot3</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="built_in">qDebug</span>() &lt;&lt; <span class="string">&quot;执行 recSlot3() 全局函数&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">QApplication <span class="title">a</span><span class="params">(argc, argv)</span></span>;</span><br><span class="line">    <span class="comment">//创建主窗口</span></span><br><span class="line">    MyWidget mywidget;</span><br><span class="line">    mywidget.message1 = <span class="string">&quot;城东书院&quot;</span>;</span><br><span class="line">    mywidget.message2 = <span class="string">&quot;https://www.cdsy.xyz&quot;</span>;</span><br><span class="line">    <span class="comment">//类的成员函数作为槽函数</span></span><br><span class="line">    QObject::<span class="built_in">connect</span>(&amp;mywidget,&amp;MyWidget::MySignal,&amp;mywidget,&amp;MyWidget::recSlot1);</span><br><span class="line">    <span class="comment">//信号函数和槽函数相连接</span></span><br><span class="line">    QObject::<span class="built_in">connect</span>(&amp;mywidget,&amp;MyWidget::MySignal,&amp;mywidget,&amp;MyWidget::recSlot2);</span><br><span class="line">    <span class="comment">//全局函数作为槽函数</span></span><br><span class="line">    QObject::<span class="built_in">connect</span>(&amp;mywidget,&amp;MyWidget::MySignal,&amp;recSlot3);</span><br><span class="line">    mywidget.<span class="built_in">show</span>();</span><br><span class="line">    <span class="comment">//发射 Signal 信号</span></span><br><span class="line">    mywidget.<span class="built_in">emitSignal</span>();</span><br><span class="line">    <span class="keyword">return</span> a.<span class="built_in">exec</span>();</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//MyWidget类的定义应该放到 .h 文件中，本例中将其写到 main.cpp 中，程序最后需要添加 #include &quot;当前源文件名.moc&quot; 语句，否则无法通过编译。</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;main.moc&quot;</span></span></span><br></pre></td></tr></table></figure>
+<p>执行程序，会弹出一个 myWidget 空白窗口，同时输出以下信息：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">执行 recSlot1() 成员函数，输出 &quot;城东书院&quot;</span><br><span class="line">执行 recSlot2() 槽函数，输出 &quot;城东书院&quot;   &quot;https://www.cdsy.xyz&quot;</span><br><span class="line">执行 recSlot3() 全局函数</span><br></pre></td></tr></table></figure>
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>ZhangPan
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://panzhangauv.github.io/2022/10/11/Qt%E6%95%99%E7%A8%8B%EF%BC%886%EF%BC%89Qt%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BF%A1%E5%8F%B7%E5%92%8C%E6%A7%BD%E5%87%BD%E6%95%B0/" title="Qt教程（6）Qt自定义信号和槽函数">https://panzhangauv.github.io/2022/10/11/Qt教程（6）Qt自定义信号和槽函数/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/10/11/Qt%E6%95%99%E7%A8%8B%EF%BC%885%EF%BC%89Qt%E5%B8%83%E5%B1%80%E7%AE%A1%E7%90%86/" rel="prev" title="Qt教程（5）Qt布局管理">
+      <i class="fa fa-chevron-left"></i> Qt教程（5）Qt布局管理
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/10/11/Qt%E6%95%99%E7%A8%8B%EF%BC%887%EF%BC%89Qt-QFile%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C/" rel="next" title="Qt教程（7）Qt QFile文件操作">
+      Qt教程（7）Qt QFile文件操作 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#1%E3%80%81%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BF%A1%E5%8F%B7%E5%87%BD%E6%95%B0"><span class="nav-number">1.</span> <span class="nav-text">1、自定义信号函数</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2%E3%80%81%E8%87%AA%E5%AE%9A%E4%B9%89%E6%A7%BD%E5%87%BD%E6%95%B0"><span class="nav-number">2.</span> <span class="nav-text">2、自定义槽函数</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#3%E3%80%81%E5%AE%8C%E6%95%B4%E7%A4%BA%E4%BE%8B"><span class="nav-number">3.</span> <span class="nav-text">3、完整示例</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">ZhangPan</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ZhangPan</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
